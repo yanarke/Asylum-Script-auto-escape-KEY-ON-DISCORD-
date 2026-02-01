@@ -18,6 +18,7 @@ getgenv().FLY_KEY_DB = getgenv().FLY_KEY_DB or {}
 
 local KEY_DB = getgenv().FLY_KEY_DB
 local keyVerified = getgenv().FLY_KEY_VERIFIED
+local DISCORD_LINK = "https://discord.gg/sMbQeCYX"
 
 --// ==========================
 --// KEYS (30)
@@ -411,4 +412,28 @@ task.spawn(function()
 			gui:Destroy()
 		end
 	end
+end)
+--// GET KEY BUTTON
+local GetKeyButton = Instance.new("TextButton", KeyFrame)
+GetKeyButton.Size = UDim2.new(0, 200, 0, 35)
+GetKeyButton.Position = UDim2.new(0, 25, 0, 95)
+GetKeyButton.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+GetKeyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+GetKeyButton.Text = "GET KEY"
+GetKeyButton.TextScaled = true
+GetKeyButton.BorderSizePixel = 0
+
+-- Rounded look
+local corner = Instance.new("UICorner", GetKeyButton)
+corner.CornerRadius = UDim.new(0, 8)
+
+-- Click event
+GetKeyButton.MouseButton1Click:Connect(function()
+	if setclipboard then
+		setclipboard(DISCORD_LINK)
+	end
+
+	GetKeyButton.Text = "LINK COPIED!"
+	task.wait(1.5)
+	GetKeyButton.Text = "GET KEY"
 end)
