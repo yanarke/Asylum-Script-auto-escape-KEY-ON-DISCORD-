@@ -9,41 +9,14 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
---// ==========================
---// SESSION MEMORY
---// ==========================
-getgenv().FLY_KEY_VERIFIED = getgenv().FLY_KEY_VERIFIED or false
-getgenv().FLY_SAVED_KEY = getgenv().FLY_SAVED_KEY or nil
-getgenv().FLY_KEY_DB = getgenv().FLY_KEY_DB or {}
-
-local KEY_DB = getgenv().FLY_KEY_DB
-local keyVerified = getgenv().FLY_KEY_VERIFIED
-
---// ==========================
---// KEYS (30)
---// ==========================
-local VALID_KEYS = {
-	"FLY-AX93","FLY-KQ21","FLY-ZM44","FLY-PX77","FLY-JT10",
-	"FLY-HS55","FLY-BC92","FLY-QR18","FLY-WE39","FLY-NM66",
-	"FLY-AA11","FLY-BB22","FLY-CC33","FLY-DD44","FLY-EE55",
-	"FLY-FF66","FLY-GG77","FLY-HH88","FLY-II99","FLY-JJ00",
-	"FLY-X1A2","FLY-X3B4","FLY-X5C6","FLY-X7D8","FLY-X9E0",
-	"FLY-Y1F2","FLY-Y3G4","FLY-Y5H6","FLY-Y7I8","FLY-Y9J0"
-}
-
-local function isValidKey(k)
-	for _, v in ipairs(VALID_KEYS) do
-		if v == k then return true end
-	end
-	return false
-end
-
 --// =====================
 --// BASE TARGET
 --// =====================
 local BASE_TARGET = Vector3.new(-2.95, 519, 394)
 
+--// =====================
 --// SETTINGS
+--// =====================
 local TRAVEL_TIME = 25
 local ORBIT_RADIUS = 30
 local ORBIT_SPEED = math.pi / 6
@@ -51,7 +24,9 @@ local RESPAWN_PAUSE = 20
 local OFFSET_RANGE = 4
 local ARRIVAL_SMOOTH_TIME = 1.5
 
+--// =====================
 --// STATE
+--// =====================
 local guiOpen = true
 local flying = false
 local orbiting = false
@@ -64,7 +39,7 @@ local currentTarget = BASE_TARGET
 --// GUI ROOT
 --// =====================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FlyOrbitPremium"
+ScreenGui.Name = "FlyOrbitSystem"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = PlayerGui
 
@@ -77,101 +52,8 @@ local function makeCorner(obj, r)
 	c.Parent = obj
 end
 
-local function makeCloseButton(parent)
+local function makeButton(parent, text, y)
 	local btn = Instance.new("TextButton", parent)
-	btn.Size = UDim2.new(0, 24, 0, 24)
-	btn.Position = UDim2.new(1, -28, 0, 6)
-	btn.Text = "✕"
-	btn.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
-	btn.TextColor3 = Color3.new(1,1,1)
-	btn.Font = Enum.Font.GothamBold
-	btn.TextScaled = true
-	makeCorner(btn, 6)
-	return btn
-end
-
---// =====================
---// KEY GUI
---// =====================
-local KeyFrame = Instance.new("Frame", ScreenGui)
-KeyFrame.Size = UDim2.new(0, 300, 0, 170)
-KeyFrame.Position = UDim2.new(0.5, -150, 0.5, -85)
-KeyFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-KeyFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-KeyFrame.BorderSizePixel = 2
-KeyFrame.Active = true
-KeyFrame.Draggable = true
-makeCorner(KeyFrame, 12)
-
-local KeyClose = makeCloseButton(KeyFrame)
-
-local KeyTitle = Instance.new("TextLabel", KeyFrame)
-KeyTitle.Size = UDim2.new(1, -40, 0, 32)
-KeyTitle.Position = UDim2.new(0, 20, 0, 4)
-KeyTitle.BackgroundTransparency = 1
-KeyTitle.Text = "FLY SYSTEM - KEY ACCESS"
-KeyTitle.TextColor3 = Color3.new(1,1,1)
-KeyTitle.Font = Enum.Font.GothamBold
-KeyTitle.TextScaled = true
-
-local KeyBox = Instance.new("TextBox", KeyFrame)
-KeyBox.Size = UDim2.new(0.85, 0, 0, 42)
-KeyBox.Position = UDim2.new(0.075, 0, 0.38, 0)
-KeyBox.PlaceholderText = "Enter your key here..."
-KeyBox.Text = ""
-KeyBox.ClearTextOnFocus = false
-KeyBox.BackgroundColor3 = Color3.fromRGB(35,35,35)
-KeyBox.TextColor3 = Color3.new(1,1,1)
-KeyBox.Font = Enum.Font.Gotham
-KeyBox.TextScaled = true
-makeCorner(KeyBox, 8)
-
-local CheckButton = Instance.new("TextButton", KeyFrame)
-CheckButton.Size = UDim2.new(0.85, 0, 0, 36)
-CheckButton.Position = UDim2.new(0.075, 0, 0.7, 0)
-CheckButton.Text = "VERIFY KEY"
-CheckButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-CheckButton.TextColor3 = Color3.new(1,1,1)
-CheckButton.Font = Enum.Font.GothamBold
-CheckButton.TextScaled = true
-makeCorner(CheckButton, 8)
-
-local StatusLabel = Instance.new("TextLabel", KeyFrame)
-StatusLabel.Size = UDim2.new(1, 0, 0, 24)
-StatusLabel.Position = UDim2.new(0, 0, 1, -26)
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.TextColor3 = Color3.new(1,1,1)
-StatusLabel.Font = Enum.Font.Gotham
-StatusLabel.TextScaled = true
-StatusLabel.Text = ""
-
---// =====================
---// FLY GUI
---// =====================
-local FlyFrame = Instance.new("Frame", ScreenGui)
-FlyFrame.Size = UDim2.new(0, 220, 0, 150)
-FlyFrame.Position = UDim2.new(0.5, -110, 0.5, -75)
-FlyFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-FlyFrame.BorderSizePixel = 2
-FlyFrame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-FlyFrame.Visible = false
-FlyFrame.Active = true
-FlyFrame.Draggable = true
-makeCorner(FlyFrame, 10)
-
-local FlyClose = makeCloseButton(FlyFrame)
-
-local Title = Instance.new("TextLabel", FlyFrame)
-Title.Size = UDim2.new(1, -40, 0, 30)
-Title.Position = UDim2.new(0, 20, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "FLY SAFE ORBIT"
-Title.TextColor3 = Color3.fromRGB(255,255,255)
-Title.Font = Enum.Font.GothamBold
-Title.TextScaled = true
-
-local function makeButton(text, y)
-	local btn = Instance.new("TextButton", FlyFrame)
 	btn.Size = UDim2.new(0, 180, 0, 40)
 	btn.Position = UDim2.new(0, 20, 0, y)
 	btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
@@ -183,60 +65,34 @@ local function makeButton(text, y)
 	return btn
 end
 
-local StartButton = makeButton("START", 40)
-local StopButton = makeButton("STOP", 95)
+--// =====================
+--// FRAME
+--// =====================
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 220, 0, 150)
+Frame.Position = UDim2.new(0.5, -110, 0.5, -75)
+Frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Frame.BorderSizePixel = 2
+Frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+Frame.Active = true
+Frame.Draggable = true
+makeCorner(Frame, 10)
+
+--// TITLE
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.BackgroundTransparency = 1
+Title.Text = "Fly Orbit System"
+Title.TextColor3 = Color3.fromRGB(255,255,255)
+Title.Font = Enum.Font.GothamBold
+Title.TextScaled = true
+
+--// BUTTONS
+local StartButton = makeButton(Frame, "START", 40)
+local StopButton = makeButton(Frame, "STOP", 95)
 
 --// =====================
---// KEY LOGIC
---// =====================
-local function verifyKey(key)
-	if not isValidKey(key) then
-		return false, "INVALID KEY"
-	end
-
-	if not KEY_DB[key] then
-		KEY_DB[key] = LocalPlayer.UserId
-		return true, "KEY LINKED"
-	end
-
-	if KEY_DB[key] == LocalPlayer.UserId then
-		return true, "WELCOME BACK"
-	end
-
-	return false, "KEY USED"
-end
-
--- AUTO LOGIN
-if keyVerified and getgenv().FLY_SAVED_KEY then
-	KeyFrame.Visible = false
-	FlyFrame.Visible = true
-end
-
-CheckButton.MouseButton1Click:Connect(function()
-	local key = KeyBox.Text
-	local ok, msg = verifyKey(key)
-	StatusLabel.Text = msg
-
-	if ok then
-		keyVerified = true
-		getgenv().FLY_KEY_VERIFIED = true
-		getgenv().FLY_SAVED_KEY = key
-		task.wait(0.8)
-		KeyFrame.Visible = false
-		FlyFrame.Visible = true
-	end
-end)
-
-KeyClose.MouseButton1Click:Connect(function()
-	ScreenGui:Destroy()
-end)
-
-FlyClose.MouseButton1Click:Connect(function()
-	FlyFrame.Visible = false
-end)
-
---// =====================
---// SYSTEM CORE
+--// TARGET RANDOMIZER
 --// =====================
 local function generateTarget()
 	local ox = math.random(-OFFSET_RANGE * 100, OFFSET_RANGE * 100) / 100
@@ -249,6 +105,9 @@ local function generateTarget()
 	)
 end
 
+--// =====================
+--// NOCLIP LOOP
+--// =====================
 RunService.Stepped:Connect(function()
 	if noclipEnabled then
 		local char = LocalPlayer.Character
@@ -262,15 +121,29 @@ RunService.Stepped:Connect(function()
 	end
 end)
 
+--// =====================
+--// STOP SYSTEM
+--// =====================
 local function stopAll()
 	flying = false
 	orbiting = false
 	noclipEnabled = false
 	waitingRespawn = false
 	allowAutoRestart = false
-	StartButton.Text = "START"
+	StartButton.Text = "STOPPED"
+
+	local char = LocalPlayer.Character
+	if char then
+		local hum = char:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.Health = 0 -- FORCE RESPAWN
+		end
+	end
 end
 
+--// =====================
+--// SMOOTH MOVE
+--// =====================
 local function smoothMove(hrp, fromCF, toCF, duration)
 	local start = tick()
 	while tick() - start < duration do
@@ -281,6 +154,9 @@ local function smoothMove(hrp, fromCF, toCF, duration)
 	hrp.CFrame = toCF
 end
 
+--// =====================
+--// ORBIT SYSTEM
+--// =====================
 local function startOrbit(center)
 	orbiting = true
 	local angle = 0
@@ -299,11 +175,14 @@ local function startOrbit(center)
 			local z = center.Z + math.sin(angle) * ORBIT_RADIUS
 
 			local targetCF = CFrame.new(x, fixedY, z)
-			hrp.CFrame = hrp.CFrame:Lerp(targetCF, 0.15)
+			hrp.CFrame = hrp.CFrame:Lerp(targetCF, 0.12)
 		end
 	end)
 end
 
+--// =====================
+--// FLY SYSTEM
+--// =====================
 local function flyToPoint()
 	if flying then return end
 	allowAutoRestart = true
@@ -356,26 +235,38 @@ local function flyToPoint()
 	end)
 end
 
+--// =====================
 --// BUTTONS
+--// =====================
 StartButton.MouseButton1Click:Connect(function()
 	waitingRespawn = false
 	flyToPoint()
 end)
 
-StopButton.MouseButton1Click:Connect(stopAll)
+StopButton.MouseButton1Click:Connect(function()
+	stopAll()
+end)
 
+--// =====================
+--// GUI TOGGLE
+--// =====================
 UserInputService.InputBegan:Connect(function(input, gp)
 	if gp then return end
-	if input.KeyCode == Enum.KeyCode.F and keyVerified then
+	if input.KeyCode == Enum.KeyCode.F then
 		guiOpen = not guiOpen
-		FlyFrame.Visible = guiOpen
+		Frame.Visible = guiOpen
 	end
 end)
 
+--// =====================
+--// RESPAWN HANDLER
+--// =====================
 LocalPlayer.CharacterAdded:Connect(function()
 	if not allowAutoRestart then return end
 
-	stopAll()
+	flying = false
+	orbiting = false
+	noclipEnabled = false
 	waitingRespawn = true
 	StartButton.Text = "WAITING 20s..."
 
@@ -388,4 +279,4 @@ LocalPlayer.CharacterAdded:Connect(function()
 	end)
 end)
 
-print("Fly Orbit Premium FIXED Loaded!")
+print("Fly Orbit System LOADED ✅")
